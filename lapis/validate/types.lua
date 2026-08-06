@@ -84,8 +84,8 @@ end
 local ParamsShapeType
 do
   local _class_0
-  local test_input_type, is_base_type, param_validator_spec
   local _parent_0 = BaseType
+  local test_input_type, is_base_type, param_validator_spec
   local _base_0 = {
     assert_errors = function(self)
       return AssertErrorType(self)
@@ -222,8 +222,8 @@ end
 local ParamsMapType
 do
   local _class_0
-  local test_input_type
   local _parent_0 = BaseType
+  local test_input_type
   local _base_0 = {
     iter = pairs,
     item_prefix = "item",
@@ -350,8 +350,8 @@ end
 local ParamsArrayType
 do
   local _class_0
-  local test_input_type
   local _parent_0 = BaseType
+  local test_input_type
   local _base_0 = {
     iter = ipairs,
     item_prefix = "item",
@@ -474,7 +474,7 @@ do
         if "table" == _exp_0 then
           return FailedTransform, table.concat(state_or_err, ", ")
         elseif "string" == _exp_0 then
-          local _ = FailedTransform, state_or_err
+          local _scrap_0 = FailedTransform, state_or_err
         end
       end
       return value, state_or_err

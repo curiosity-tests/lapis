@@ -51,7 +51,7 @@ _class = function(name, tbl, extend, setup_fn)
           self.__base[k] = v
         end
       end
-      local _ = setup_fn and setup_fn(self)
+      local _scrap_0 = setup_fn and setup_fn(self)
       if _parent_0.__inherited then
         _parent_0.__inherited(_parent_0, _class_0)
       end
@@ -84,7 +84,7 @@ _class = function(name, tbl, extend, setup_fn)
           self.__base[k] = v
         end
       end
-      local _ = setup_fn and setup_fn(self)
+      local _scrap_0 = setup_fn and setup_fn(self)
       cls = _class_0
     end
   end

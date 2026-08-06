@@ -441,11 +441,11 @@ stub_request = function(app_cls, url, opts)
     if opts.params then
       support.add_params(stub, opts.params)
     end
-    local _ = stub.req.parsed_url
-    _ = stub.req.method
-    _ = stub.req.scheme
-    _ = stub.req.port
-    _ = stub.req.headers
+    local _scrap_0 = stub.req.parsed_url
+    _scrap_0 = stub.req.method
+    _scrap_0 = stub.req.scheme
+    _scrap_0 = stub.req.port
+    _scrap_0 = stub.req.headers
     return stub.req.request_uri
   end
   simulate_request(app, url, opts)

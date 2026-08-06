@@ -351,7 +351,7 @@ do
       elseif "number" == _exp_0 then
         self:write(tostring(thing))
       elseif "nil" == _exp_0 then
-        local _ = nil
+        local _scrap_0 = nil
       elseif "table" == _exp_0 then
         for _index_0 = 1, #thing do
           local chunk = thing[_index_0]

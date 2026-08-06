@@ -117,7 +117,7 @@ do
         local default_cpath = os.getenv("LUA_CPATH")
         local server_path = path.join(self.runner.base_path, "?.lua")
         local server_cpath = path.join(self.runner.base_path, "?.so")
-        test_server = "\n        lua_package_path '" .. tostring(server_path) .. ";" .. tostring(default_path) .. "';\n        lua_package_cpath '" .. tostring(server_cpath) .. ";" .. tostring(default_cpath) .. "';\n      " .. test_server
+        test_server = ("\n        lua_package_path '" .. tostring(server_path) .. ";" .. tostring(default_path) .. "';\n        lua_package_cpath '" .. tostring(server_cpath) .. ";" .. tostring(default_cpath) .. "';\n      ") .. test_server
       end
       return cfg:gsub("%f[%a]http%s-{", "http {\n" .. test_server)
     end

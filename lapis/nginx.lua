@@ -197,7 +197,7 @@ build_request = function(unlazy)
     local t = lazy_tbl({ }, ngx_req)
     if unlazy then
       for k in pairs(ngx_req) do
-        local _ = t[k]
+        local _scrap_0 = t[k]
       end
     end
     return t

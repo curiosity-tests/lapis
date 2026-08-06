@@ -74,7 +74,7 @@ local preload_homogeneous
 preload_homogeneous = function(sub_relations, model, objects, preload_spec, ...)
   local _exp_0 = type(preload_spec)
   if "nil" == _exp_0 then
-    local _ = nil
+    local _scrap_0 = nil
   elseif "table" == _exp_0 then
     for key, val in pairs(preload_spec) do
       local _continue_0 = false

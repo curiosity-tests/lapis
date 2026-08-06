@@ -92,7 +92,7 @@ do
       elseif "function" == _exp_0 then
         self:write(thing(self.buffer))
       elseif "nil" == _exp_0 then
-        local _ = nil
+        local _scrap_0 = nil
       else
         error("Don't know how to write: (" .. tostring(t) .. ") " .. tostring(thing))
       end

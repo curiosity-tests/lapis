@@ -241,8 +241,8 @@ end
 local OrderedPaginator
 do
   local _class_0
-  local valid_orders
   local _parent_0 = Paginator
+  local valid_orders
   local _base_0 = {
     order = "ASC",
     per_page = 10,

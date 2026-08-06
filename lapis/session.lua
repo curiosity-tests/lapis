@@ -63,7 +63,7 @@ local flatten_session
 flatten_session = function(sess)
   local mt = getmetatable(sess)
   local s = { }
-  local _ = sess[s]
+  local _scrap_0 = sess[s]
   do
     local index = mt.__index
     if index then
