@@ -152,15 +152,21 @@ get = do
     config_cache[name] = conf
     conf
 
+local config_module
+
 ---Resolve the application module name. Falls back to `config.default_app_module`, then "app".
 ---@param override? string Explicit module name to use, bypassing config
 ---@return string
 get_app_module = (override) ->
-  override or get!.default_app_module or "app"
+  -- read get through the module table so a getter replaced by
+  -- lapis.environment.push is respected
+  override or config_module.get!.default_app_module or "app"
 
-setmetatable {
+config_module = setmetatable {
   :get, :get_app_module, :config, :merge_set, :default_config, :reset
 }, {
   __call: (...) => config ...
 }
+
+config_module
 
