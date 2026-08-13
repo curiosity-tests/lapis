@@ -1085,6 +1085,78 @@ describe "lapis.db.model", ->
         }
       }, things
 
+    it "fetches by raw dest key with computed source key", ->
+      mock_query "SELECT", {
+        {id: 10, email: "Adam@Example.com", _lapis_include_key_1: "adam@example.com"}
+        {id: 11, email: "BEA@example.com", _lapis_include_key_1: "bea@example.com"}
+      }
+
+      things = {things[1], things[2]}
+      things[1].emails = {"Adam@Example.com", "missing@example.com"}
+      things[2].emails = {"BEA@example.com"}
+
+      ThingItems\include_in things, {
+        [db.raw "lower(email)"]: (thing) ->
+          db.list [e\lower! for e in *thing.emails]
+      }, {
+        as: "users"
+        many: true
+      }
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "thing_items" WHERE lower(email) IN ('adam@example.com', 'missing@example.com', 'bea@example.com')]]
+      }
+
+      -- the internal alias column is stripped from the loaded rows
+      assert.same {
+        { id: 10, email: "Adam@Example.com" }
+      }, things[1].users
+
+      assert.same {
+        { id: 11, email: "BEA@example.com" }
+      }, things[2].users
+
+    it "fetches singular result by raw dest key", ->
+      mock_query "SELECT", {
+        {id: 10, email: "Adam@Example.com", _lapis_include_key_1: "adam@example.com"}
+        {id: 11, email: "BEA@example.com", _lapis_include_key_1: "bea@example.com"}
+      }
+
+      things = {things[1], things[2], things[3]}
+      things[1].email = "adam@EXAMPLE.com"
+      things[2].email = "Bea@Example.Com"
+      things[3].email = "missing@example.com"
+
+      ThingItems\include_in things, {
+        [db.raw "lower(email)"]: (thing) -> thing.email\lower!
+      }, as: "user"
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "thing_items" WHERE lower(email) IN ('adam@example.com', 'bea@example.com', 'missing@example.com')]]
+      }
+
+      assert.same { id: 10, email: "Adam@Example.com" }, things[1].user
+      assert.same { id: 11, email: "BEA@example.com" }, things[2].user
+      assert.same nil, things[3].user
+
+    it "fetches by raw dest key with column source key and fields", ->
+      mock_query "SELECT", {
+        {id: "101", name: "one", _lapis_include_key_1: 101}
+        {id: "104", name: "four", _lapis_include_key_1:104}
+      }
+
+      ThingItems\include_in things, {
+        [db.raw "id::integer"]: "thing_id"
+      }, as: "thing_item", fields: "id, name"
+
+      assert_queries {
+        [[SELECT id, name, (id::integer) AS "_lapis_include_key_1" FROM "thing_items" WHERE id::integer IN (101, 102, 103, 104, 105)]]
+      }
+
+      assert.same { id: "101", name: "one" }, things[1].thing_item
+      assert.same nil, things[2].thing_item
+      assert.same { id: "104", name: "four" }, things[4].thing_item
+
   describe "include_in with composite keys", ->
     local Things, ThingItems, things
 
@@ -1286,6 +1358,56 @@ describe "lapis.db.model", ->
       assert.same thing_items[2], things[3].thing_item
       assert.same thing_items[3], things[4].thing_item
       assert.same nil, things[5].thing_item
+
+    it "with raw key", ->
+      mock_query "SELECT", {
+        {id: 51, alpha_id: 100, email: "Adam@X.com", _lapis_include_key_1: "adam@x.com"}
+        {id: 52, alpha_id: 101, email: "BEA@x.com", _lapis_include_key_1: "bea@x.com"}
+      }
+
+      things = {things[1], things[2], things[3]}
+      things[1].email = "adam@X.COM"
+      things[2].email = "Bea@X.com"
+      things[3].email = "Cat@X.com"
+
+      ThingItems\include_in things, {
+        "alpha_id"
+        [db.raw "lower(email)"]: (thing) -> thing.email\lower!
+      }
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "thing_items" WHERE ("alpha_id", lower(email)) IN ((100, 'adam@x.com'), (101, 'bea@x.com'), (101, 'cat@x.com'))]]
+      }
+
+      assert.same { id: 51, alpha_id: 100, email: "Adam@X.com" }, things[1].thing_item
+      assert.same { id: 52, alpha_id: 101, email: "BEA@x.com" }, things[2].thing_item
+      assert.same nil, things[3].thing_item
+
+    it "with raw key and many", ->
+      mock_query "SELECT", {
+        {id: 61, alpha_id: 101, email: "BEA@x.com", _lapis_include_key_1: "bea@x.com"}
+        {id: 62, alpha_id: 101, email: "bea@X.COM", _lapis_include_key_1: "bea@x.com"}
+      }
+
+      things = {things[2], things[3]}
+      things[1].email = "Bea@X.com"
+      things[2].email = "Cat@X.com"
+
+      ThingItems\include_in things, {
+        "alpha_id"
+        [db.raw "lower(email)"]: (thing) -> thing.email\lower!
+      }, many: true
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "thing_items" WHERE ("alpha_id", lower(email)) IN ((101, 'bea@x.com'), (101, 'cat@x.com'))]]
+      }
+
+      assert.same {
+        { id: 61, alpha_id: 101, email: "BEA@x.com" }
+        { id: 62, alpha_id: 101, email: "bea@X.COM" }
+      }, things[1].thing_items
+
+      assert.same {}, things[2].thing_items
 
   describe "include_in with list keys", ->
     local Things, Items

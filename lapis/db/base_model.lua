@@ -824,6 +824,45 @@ do
       else
         find_by_fields = dest_key
       end
+      local aliased_fields
+      local alias_raw_key
+      alias_raw_key = function(key)
+        aliased_fields = aliased_fields or { }
+        local name = "_lapis_include_key_" .. tostring(#aliased_fields + 1)
+        insert(aliased_fields, name)
+        fields = tostring(fields) .. ", (" .. tostring(key[1]) .. ") AS " .. tostring(self.db.escape_identifier(name))
+        return name
+      end
+      local dest_fields
+      if composite_foreign_key then
+        do
+          local _accum_0 = { }
+          local _len_0 = 1
+          for _index_0 = 1, #dest_key do
+            local k = dest_key[_index_0]
+            if self.db.is_raw(k) then
+              _accum_0[_len_0] = alias_raw_key(k)
+            else
+              _accum_0[_len_0] = k
+            end
+            _len_0 = _len_0 + 1
+          end
+          dest_fields = _accum_0
+        end
+      elseif self.db.is_raw(dest_key) then
+        dest_fields = alias_raw_key(dest_key)
+      else
+        dest_fields = dest_key
+      end
+      local strip_aliased_fields
+      if aliased_fields then
+        strip_aliased_fields = function(t)
+          for _index_0 = 1, #aliased_fields do
+            local f = aliased_fields[_index_0]
+            t[f] = nil
+          end
+        end
+      end
       local tbl_name = self.db.escape_identifier(self:table_name())
       local clause = {
         [find_by_fields] = self.db.list(include_ids)
@@ -881,18 +920,18 @@ do
             end
             if many then
               if composite_foreign_key then
-                local array = _get(records, _fields(t, dest_key))
+                local array = _get(records, _fields(t, dest_fields))
                 if array then
                   insert(array, row)
                 else
                   _put(records, {
                     row
-                  }, _fields(t, dest_key))
+                  }, _fields(t, dest_fields))
                 end
               else
-                local t_key = t[dest_key]
+                local t_key = t[dest_fields]
                 if not (t_key) then
-                  error("Model.include_in: query returnd a row that is missing the joining field (" .. tostring(tbl_name) .. ": " .. tostring(dest_key) .. ")")
+                  error("Model.include_in: query returned a row that is missing the joining field (" .. tostring(tbl_name) .. ": " .. tostring(dest_fields) .. ")")
                 end
                 if ordered_records then
                   insert(ordered_records, {
@@ -907,9 +946,9 @@ do
               end
             else
               if composite_foreign_key then
-                _put(records, row, _fields(t, dest_key))
+                _put(records, row, _fields(t, dest_fields))
               else
-                local t_key = t[dest_key]
+                local t_key = t[dest_fields]
                 if ordered_records then
                   insert(ordered_records, {
                     t_key,
@@ -918,6 +957,9 @@ do
                 end
                 records[t_key] = row
               end
+            end
+            if strip_aliased_fields then
+              strip_aliased_fields(t)
             end
           end
           if composite_foreign_key then

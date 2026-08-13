@@ -384,6 +384,32 @@ class BaseModel
       else
         dest_key
 
+      -- a raw dest_key produces no indexable column on the result rows, so
+      -- alias each raw expression and read the join value from the alias
+      local aliased_fields
+      alias_raw_key = (key) ->
+        aliased_fields or= {}
+        name = "_lapis_include_key_#{#aliased_fields + 1}"
+        insert aliased_fields, name
+        fields = "#{fields}, (#{key[1]}) AS #{@db.escape_identifier name}"
+        name
+
+      dest_fields = if composite_foreign_key
+        for k in *dest_key
+          if @db.is_raw k
+            alias_raw_key k
+          else
+            k
+      elseif @db.is_raw dest_key
+        alias_raw_key dest_key
+      else
+        dest_key
+
+      strip_aliased_fields = if aliased_fields
+        (t) ->
+          for f in *aliased_fields
+            t[f] = nil
+
       tbl_name = @db.escape_identifier @table_name!
 
       -- the list of objects to find
@@ -436,19 +462,19 @@ class BaseModel
 
           if many
             if composite_foreign_key
-              array = _get records, _fields t, dest_key
+              array = _get records, _fields t, dest_fields
 
               if array
                 insert array, row
               else
                 _put records, {
                   row
-                }, _fields t, dest_key
+                }, _fields t, dest_fields
 
             else
-              t_key = t[dest_key]
+              t_key = t[dest_fields]
               unless t_key
-                error "Model.include_in: query returnd a row that is missing the joining field (#{tbl_name}: #{dest_key})"
+                error "Model.include_in: query returned a row that is missing the joining field (#{tbl_name}: #{dest_fields})"
 
               insert ordered_records, {t_key, row} if ordered_records
 
@@ -459,11 +485,13 @@ class BaseModel
 
           else
             if composite_foreign_key
-              _put records, row, _fields t, dest_key
+              _put records, row, _fields t, dest_fields
             else
-              t_key = t[dest_key]
+              t_key = t[dest_fields]
               insert ordered_records, {t_key, row} if ordered_records
               records[t_key] = row
+
+          strip_aliased_fields t if strip_aliased_fields
 
 
         -- load the rows into we feteched into the models
