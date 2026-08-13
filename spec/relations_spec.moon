@@ -337,6 +337,27 @@ describe "lapis.db.model.relations", ->
       [[SELECT * FROM "user_page_data" WHERE "page_id" = 'hello' AND "user_id" IS NULL LIMIT 1]]
     }
 
+  it "makes has_one getter with raw key", ->
+    mock_query "SELECT", { { id: 101 } }
+
+    models.UserEmails = class extends Model
+
+    models.Users = class extends Model
+      @relations: {
+        {"user_email", has_one: "UserEmails", key: {
+          [db.raw "lower(email)"]: (u) -> u.email\lower!
+        }}
+      }
+
+    user = models.Users!
+    user.email = "Leafo@X.com"
+
+    assert user\get_user_email!
+
+    assert_queries {
+      [[SELECT * FROM "user_emails" WHERE lower(email) = 'leafo@x.com' LIMIT 1]]
+    }
+
   it "should make has_one getter key and local key", ->
     mock_query "SELECT", { { id: 101, thing_email: "leafo@leafo" } }
 
@@ -1197,6 +1218,68 @@ describe "lapis.db.model.relations", ->
       }, user_pages[2].data
 
       assert.same {}, user_pages[3].data
+
+    it "preloads has_many with raw key", ->
+      mock_query "SELECT", {
+        {id: 1, user_id: 99, email: "Leaf@X.com", _lapis_include_key_1: "leaf@x.com"}
+        {id: 2, user_id: 99, email: "LEAF@x.com", _lapis_include_key_1: "leaf@x.com"}
+      }
+
+      models.UserEmails = class extends Model
+
+      models.Users = class Users extends Model
+        @relations: {
+          {"user_emails", has_many: "UserEmails", key: {
+            "user_id"
+            [db.raw "lower(email)"]: (u) -> u.email\lower!
+          }}
+        }
+
+      users = {
+        Users\load { user_id: 99, email: "leaf@X.COM" }
+        Users\load { user_id: 100, email: "Other@x.com" }
+      }
+
+      Users\preload_relation users, "user_emails"
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "user_emails" WHERE ("user_id", lower(email)) IN ((99, 'leaf@x.com'), (100, 'other@x.com'))]]
+      }
+
+      assert.same {
+        {id: 1, user_id: 99, email: "Leaf@X.com"}
+        {id: 2, user_id: 99, email: "LEAF@x.com"}
+      }, users[1].user_emails
+
+      assert.same {}, users[2].user_emails
+
+    it "preloads has_one with raw key", ->
+      mock_query "SELECT", {
+        {id: 1, email: "Leaf@X.com", _lapis_include_key_1: "leaf@x.com"}
+      }
+
+      models.UserEmails = class extends Model
+
+      models.Users = class Users extends Model
+        @relations: {
+          {"user_email", has_one: "UserEmails", key: {
+            [db.raw "lower(email)"]: (u) -> u.email\lower!
+          }}
+        }
+
+      users = {
+        Users\load { id: 1, email: "LEAF@x.com" }
+        Users\load { id: 2, email: "missing@x.com" }
+      }
+
+      Users\preload_relation users, "user_email"
+
+      assert_queries {
+        [[SELECT *, (lower(email)) AS "_lapis_include_key_1" FROM "user_emails" WHERE lower(email) IN ('leaf@x.com', 'missing@x.com')]]
+      }
+
+      assert.same {id: 1, email: "Leaf@X.com"}, users[1].user_email
+      assert.same nil, users[2].user_email
 
     it "preloads has_one with key and local_key", ->
       mock_query "SELECT", {
