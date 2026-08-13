@@ -1,8 +1,5 @@
-local types, BaseType
-do
-  local _obj_0 = require("tableshape")
-  types, BaseType = _obj_0.types, _obj_0.BaseType
-end
+local types
+types = require("tableshape").types
 local loadstring = loadstring or load
 local deep_copy
 deep_copy = function(a)
@@ -139,54 +136,6 @@ local TAGS = {
   'var',
   'video'
 }
-local Proxy
-do
-  local _class_0
-  local _parent_0 = BaseType
-  local _base_0 = {
-    check_value = function(self, ...)
-      return self.fn():check_value(...)
-    end,
-    _transform = function(self, ...)
-      return self.fn():_transform(...)
-    end,
-    describe = function(self)
-      return self.fn():describe()
-    end
-  }
-  _base_0.__index = _base_0
-  setmetatable(_base_0, _parent_0.__base)
-  _class_0 = setmetatable({
-    __init = function(self, fn)
-      self.fn = fn
-    end,
-    __base = _base_0,
-    __name = "Proxy",
-    __parent = _parent_0
-  }, {
-    __index = function(cls, name)
-      local val = rawget(_base_0, name)
-      if val == nil then
-        local parent = rawget(cls, "__parent")
-        if parent then
-          return parent[name]
-        end
-      else
-        return val
-      end
-    end,
-    __call = function(cls, ...)
-      local _self_0 = setmetatable({}, _base_0)
-      cls.__init(_self_0, ...)
-      return _self_0
-    end
-  })
-  _base_0.__class = _class_0
-  if _parent_0.__inherited then
-    _parent_0.__inherited(_parent_0, _class_0)
-  end
-  Proxy = _class_0
-end
 local optimized = 0
 local s
 s = function(t)
@@ -266,7 +215,7 @@ local basic_table = s({
       "key_literal",
       types.string
     }),
-    Proxy(function()
+    types.proxy(function()
       return basic_type
     end)
   }))
@@ -276,7 +225,7 @@ local basic_function = types.shape({
   types.shape({ }),
   types.shape({ }),
   "slim",
-  types.array_of(Proxy(function()
+  types.array_of(types.proxy(function()
     return static_html_statement
   end)),
   [-1] = types.number + types["nil"]
@@ -303,7 +252,7 @@ local nested_block_statement = types.one_of({
           types.shape({ }),
           types.shape({ }),
           "slim",
-          Proxy(function()
+          types.proxy(function()
             return optimized_statements
           end)
         }),
@@ -318,7 +267,7 @@ local nested_block_statement = types.one_of({
       "unless"
     }),
     types.any,
-    Proxy(function()
+    types.proxy(function()
       return optimized_statements
     end),
     [-1] = types.number + types["nil"]
@@ -329,13 +278,13 @@ local nested_block_statement = types.one_of({
       types.shape({
         "elseif",
         types.any,
-        Proxy(function()
+        types.proxy(function()
           return optimized_statements
         end)
       }),
       types.shape({
         "else",
-        Proxy(function()
+        types.proxy(function()
           return optimized_statements
         end)
       }),
@@ -349,7 +298,7 @@ local nested_block_statement = types.one_of({
     }),
     types.any,
     types.any,
-    Proxy(function()
+    types.proxy(function()
       return optimized_statements
     end),
     [-1] = types.number + types["nil"]

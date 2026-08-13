@@ -1,5 +1,5 @@
 
-import types, BaseType from require "tableshape"
+import types from require "tableshape"
 
 loadstring = loadstring or load
 
@@ -12,12 +12,6 @@ deep_copy = (a) ->
 TAGS = {
   "applet", "capture", "element", "html_5", "nobr", "quote", "raw", "text", "widget", 'a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdo', 'big', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'command', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form', 'frame', 'frameset', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'link', 'map', 'mark', 'meta', 'meter', 'nav', 'noframes', 'noscript', 'object', 'ol', 'optgroup', 'option', 'p', 'param', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strike', 'strong', 'style', 'sub', 'sup', 'svg', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'tt', 'u', 'ul', 'var', 'video',
 }
-
-class Proxy extends BaseType
-  new: (@fn) =>
-  check_value: (...) => @.fn!\check_value ...
-  _transform: (...) => @.fn!\_transform ...
-  describe: => @.fn!\describe!
 
 optimized = 0
 
@@ -81,7 +75,7 @@ basic_table = s {
   "table"
   types.array_of types.shape {
     types.shape {"key_literal", types.string}
-    Proxy -> basic_type
+    types.proxy -> basic_type
   }
 }
 
@@ -90,7 +84,7 @@ basic_function = types.shape {
   types.shape {}
   types.shape {}
   "slim"
-  types.array_of Proxy -> static_html_statement
+  types.array_of types.proxy -> static_html_statement
   [-1]: types.number + types.nil
 }
 
@@ -119,7 +113,7 @@ nested_block_statement = types.one_of {
           types.shape {}
           types.shape {}
           "slim"
-          Proxy -> optimized_statements
+          types.proxy -> optimized_statements
         }
         types.any
       }
@@ -130,7 +124,7 @@ nested_block_statement = types.one_of {
   types.shape {
     types.one_of { "if", "unless" }
     types.any
-    Proxy -> optimized_statements
+    types.proxy -> optimized_statements
     [-1]: types.number + types.nil
   }, extra_fields: types.map_of(
     types.number * types.custom (v) -> v > 3
@@ -138,12 +132,12 @@ nested_block_statement = types.one_of {
       types.shape {
         "elseif"
         types.any
-        Proxy -> optimized_statements
+        types.proxy -> optimized_statements
       }
 
       types.shape {
         "else"
-        Proxy -> optimized_statements
+        types.proxy -> optimized_statements
       }
 
       types.any
@@ -154,7 +148,7 @@ nested_block_statement = types.one_of {
     types.one_of {"for", "foreach"}
     types.any
     types.any
-    Proxy -> optimized_statements
+    types.proxy -> optimized_statements
     [-1]: types.number + types.nil
   }
 }
